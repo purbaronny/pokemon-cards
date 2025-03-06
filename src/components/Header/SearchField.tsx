@@ -6,7 +6,7 @@ import usePokemonList from "../../hooks/usePokemonList";
 const SearchField: React.FC = () => {
   const [editing, setEditing] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  const { setSearchQuery: setSearchQueryGlobal } = usePokemonList();
+  const {setSearchQuery: setSearchQueryGlobal } = usePokemonList();
 
   // Wait for 1 seconds before searching
   const debounced = useDebouncedCallback(
