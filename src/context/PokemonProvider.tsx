@@ -1,82 +1,106 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-import { useEffect, useState } from "react";
-import PokemonContext, { Pokemon, PokemonContextType } from "./PokemonContext";
+import { useEffect, useReducer, useState } from "react";
+import PokemonContext, { Pokemon, pokemonReducer, PokemonState } from "./PokemonContext";
 import fetchPokemonDetails from "../utils/fetchPokemonDetails";
 
 const LIST_LOCAL_STORAGE_NAME = "pokemonListStorage";
 
 export const PokemonProvider: React.FC<{ children: JSX.Element }> = ({ children }) => {
-  const [pokemonList, setPokemonList] = useState<Pokemon[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
-  // const [error, setError] = useState<unknown>(null);
-  const [error, setError] = useState<string | null>(null); 
-  const [searchQuery, setSearchQuery] = useState<string>('');
-  const [sortByField, setSortByField] = useState<string>('hp');
+  const initialState: PokemonState = {
+    pokemonList: [],
+    loading: true,
+    error: null,
+    searchQuery: "",
+    setSearchQuery: () => {}, 
+    sortByField: "hp",
+    filterByField: "",
+    page: 1,
+    offset: 0,
+    setPage: () => {},
+  };
 
-  const MAX_FETCH_DATA = 10000;
+  const [state, dispatch] = useReducer(pokemonReducer, initialState);
+  const [page, setPage] = useState(1);
+
+  const setSearchQuery = (query: string) => {
+    dispatch({ type: "SET_SEARCH_QUERY", payload: query });
+  };
+
+  // const setPage = (newPage: number) => {
+  //   dispatch({ type: "SET_PAGE", payload: newPage });
+  // };
+
+  // const MAX_FETCH_DATA = 10000;
   useEffect(() => {
     const fetchPokemonList = async () => {
-      setLoading(true);
+      dispatch({ type: "SET_LOADING", payload: true });
+
       try {
-        setLoading(true);
-        let filteredResults: Pokemon[];
+        let filteredResults;
         const storedDetail = localStorage.getItem(LIST_LOCAL_STORAGE_NAME);
-        if (storedDetail && storedDetail.length > 0) {
-          const parsedData: Pokemon[] = JSON.parse(storedDetail);
-          filteredResults = parsedData;
+        if (storedDetail) {
+          filteredResults = JSON.parse(storedDetail);
         } else {
-          const response = await fetch(`https://pokeapi.co/api/v2/pokemon?limit=${searchQuery ? MAX_FETCH_DATA : 20}`);
-          if (!response.ok) {
-            throw new Error('Failed to fetch Pokémon.');
+          try {
+            const offset = (page - 1) * 20;
+            //const response = await fetch(`https://pokeapi.co/api/v2/pokemon?limit=${state.searchQuery ? MAX_FETCH_DATA : 20}&offset=${state.offset}`);
+            const response = await fetch(`https://pokeapi.co/api/v2/pokemon?limit=20&offset=${offset}`);
+            if (!response.ok) throw new Error("Failed to fetch Pokémon.");
+            const data = await response.json();
+          
+            dispatch({ type: "SET_POKEMON_LIST", payload: data.results });
+          } catch (error) {
+            dispatch({ type: "SET_ERROR", payload: error instanceof Error ? error.message : "Unknown error occurred" });
+          } finally {
+            dispatch({ type: "SET_LOADING", payload: false });
           }
-          const data = await response.json() as { results: Pokemon[]};
-          filteredResults = data.results;
-          // Do filtering based on the query string
-          localStorage.setItem(LIST_LOCAL_STORAGE_NAME, JSON.stringify(filteredResults));
+
+
+          // const response = await fetch(`https://pokeapi.co/api/v2/pokemon?limit=${state.searchQuery ? MAX_FETCH_DATA : 20}&offset=${state.offset}`);
+          // if (!response.ok) throw new Error("Failed to fetch Pokémon.");
+          // const data = await response.json();
+          
+
+          // dispatch({ type: "SET_POKEMON_LIST", payload: data.results });
+          // filteredResults = data.results;
+          // localStorage.setItem(LIST_LOCAL_STORAGE_NAME, JSON.stringify(filteredResults));
         }
 
-        if (searchQuery) {
-          const regex = new RegExp(searchQuery, 'i'); // Case-insensitive regex
-          filteredResults = filteredResults.filter(pokemon => regex.test(pokemon.name));
+        if (state.searchQuery) {
+          const regex = new RegExp(state.searchQuery, "i");
+          filteredResults = filteredResults.filter((pokemon: Pokemon) => regex.test(pokemon.name));
         }
 
-        if (sortByField) {
-          const detailsMap = await Promise.all(filteredResults.map(async (each) => {
+        if (state.filterByField) {
+          filteredResults = filteredResults.filter((pokemon: Pokemon) => pokemon.name.startsWith(state.filterByField));
+        }
+
+        if (state.sortByField) {
+          const detailsMap = await Promise.all(filteredResults.map(async (each: Pokemon) => {
             const detail = await fetchPokemonDetails(each.name);
             return detail.data;
           }));
-          const sorted = detailsMap.sort((a: any, b: any) => a.health - b.health);
-          const finalList = sorted.map((each) => {
-            const data: Pokemon = {
-              name: each?.name || "",
-              url: "",
-            }
-            return data;
-          })
-          filteredResults = finalList;
+          detailsMap.sort((a: any, b: any) => a[state.sortByField] - b[state.sortByField]);
+
+          filteredResults = detailsMap.map((each) => ({
+            name: each?.name || "",
+            url: "",
+          }));
         }
 
-        const cappedResults = filteredResults.slice(0, 20); // Cap the results to max 20 items
-        setPokemonList(cappedResults);
-        setLoading(false);
+        dispatch({ type: "SET_POKEMON_LIST", payload: filteredResults.slice(0, 20) });
       } catch (error) {
-        // setError(error);
-        setError(error instanceof Error ? error.message : "Unknown error occurred");
-        setLoading(false);
+        dispatch({ type: "SET_ERROR", payload: error instanceof Error ? error.message : "Unknown error occurred" });
+      } finally {
+        dispatch({ type: "SET_LOADING", payload: false });
       }
     };
 
     fetchPokemonList();
-  }, [searchQuery, sortByField]);
+  }, [state.searchQuery, state.sortByField, state.filterByField, state.page]);
 
-  const value: PokemonContextType = {
-    pokemonList,
-    loading,
-    error,
-    searchQuery,
-    setSearchQuery,
-    setSortByField
-  };
-
-  return <PokemonContext.Provider value={value}>{children}</PokemonContext.Provider>;
+  return (
+    <PokemonContext.Provider value={{ ...state, setSearchQuery, dispatch, page, setPage }}>
+      {children}
+    </PokemonContext.Provider>
+  );
 };

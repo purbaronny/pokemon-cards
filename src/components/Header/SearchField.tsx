@@ -57,7 +57,8 @@ const SearchField: React.FC = () => {
 
   // 🔹 Debounce input selama 1 detik agar pencarian tidak terlalu cepat
   const debounced = useDebouncedCallback((value) => {
-    setSearchQuery(value);
+    // setSearchQuery(value);
+    if (setSearchQuery) setSearchQuery(value);
   }, 1000);
 
   useEffect(() => {

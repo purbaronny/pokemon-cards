@@ -5,6 +5,7 @@ import MobileWrapper from "../../components/MobileWrapper";
 import usePokemonList from "../../hooks/usePokemonList";
 import SortControl from "../../components/sort/SortControl";
 import ColumnToggle from "../../components/toggle/ColumnToggle";
+import Pagination from "../../context/Pagination";
 
 const ListPage: React.FC = () => {
   const { pokemonList, loading, error } = usePokemonList();
@@ -37,6 +38,7 @@ const ListPage: React.FC = () => {
           ))}
         </div>
       )}
+      <Pagination></Pagination>
     </MobileWrapper>
   );
 };
