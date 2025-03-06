@@ -117,6 +117,8 @@ export const PokemonProvider: React.FC<{ children: JSX.Element }> = ({ children 
     pokemonList,
     loading,
     error,
+    searchQuery,
+    sortByField,
     setSearchQuery: (query: string) => dispatch({ type: "SET_SEARCH_QUERY", payload: query }),
     setSortByField: (field: string) => dispatch({ type: "SET_SORT_BY", payload: field }),
     setPage: (newPage: number) => dispatch({ type: "SET_PAGE", payload: newPage }),
