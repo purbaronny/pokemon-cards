@@ -56,7 +56,7 @@ const ListPage: React.FC = () => {
         <div>Loading...</div>
       ) : (
         <div className={`px-5 py-4 grid ${gridColumns === 1 ? "grid-cols-1" : "grid-cols-2"} gap-5`}>
-          {sortedPokemonList.map((each, index) => (
+          {Array.isArray(sortedPokemonList) && sortedPokemonList.map((each, index) => (
             <Card key={index} name={each.name} />
           ))}
         </div>

@@ -9,6 +9,8 @@ export interface PokemonContextType {
   pokemonList: Pokemon[];
   loading: boolean;
   error: unknown;
+  searchQuery: string; 
+  sortByField: string; 
   setSearchQuery: (query: string) => void;
   setSortByField: (query: string) => void;
   setPage: (query: number) => void;
