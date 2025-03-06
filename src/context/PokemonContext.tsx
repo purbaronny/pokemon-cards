@@ -11,6 +11,8 @@ export interface PokemonContextType {
   error: unknown;
   setSearchQuery: (query: string) => void;
   setSortByField: (query: string) => void;
+  setPage: (query: number) => void;
+  page: number;
 }
 
 const PokemonContext = createContext<PokemonContextType | undefined>(undefined);
