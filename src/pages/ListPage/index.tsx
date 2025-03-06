@@ -3,60 +3,36 @@ import Card from "../../components/Card";
 import Header from "../../components/Header";
 import MobileWrapper from "../../components/MobileWrapper";
 import usePokemonList from "../../hooks/usePokemonList";
+import SortControl from "../../components/sort/SortControl";
+import ColumnToggle from "../../components/toggle/ColumnToggle";
 
 const ListPage: React.FC = () => {
   const { pokemonList, loading, error } = usePokemonList();
   const [sortOrder, setSortOrder] = useState("asc");
-  const [gridColumns, setGridColumns] = useState(2);
+  const [isSingleColumn, setIsSingleColumn] = useState(false);
 
-  const sortedPokemonList = sortOrder
-    ? [...pokemonList].sort((a, b) => {
-        return sortOrder === "asc" ? a.name.localeCompare(b.name) : b.name.localeCompare(a.name);
-      })
-    : pokemonList;
+  if (error) return <div>Something is wrong :(</div>;
 
+  const sortedPokemon = [...pokemonList].sort((a, b) => {
+    if (sortOrder === "asc") {
+      return a.name.localeCompare(b.name);
+    } else {
+      return b.name.localeCompare(a.name);
+    }
+  });
 
-  if (error) return <div>Something is wrong :(</div>
   return (
     <MobileWrapper>
-      <Header withSearch/>
-      <div className="px-5 py-4 flex justify-between items-center">
-        <div className="flex items-center gap-4">
-          {/* <span className="text-base font-normal font-dm-sans">Sort by</span> */}
-          <div className="relative">
-            <select
-              className="border px-4 py-2 rounded-md text-base font-dm-sans"
-              value={sortOrder}
-              onChange={(e) => setSortOrder(e.target.value)}
-            >
-              <option value="">Sort By</option>
-              <option value="asc">Ascending</option>
-              <option value="desc">Descending</option>
-            </select>
-            <span className="absolute right-2 top-1/2 transform -translate-y-1/2">▼</span>
-          </div>
-        </div>
-        <div className="flex items-center gap-4">
-          {/* <span className="text-base font-normal font-dm-sans">Display</span> */}
-          <div className="relative">
-            <select
-              className="border px-4 py-2 rounded-md text-base font-dm-sans"
-              value={gridColumns === 2 ? "2" : gridColumns === 1 ? "1" : ""}
-              onChange={(e) => setGridColumns(e.target.value === "" ? 2 : Number(e.target.value))}
-            >
-              <option value=""> </option>
-              <option value="1">1 Column</option>
-              <option value="2">2 Columns</option>
-            </select>
-            <span className="absolute right-2 top-1/2 transform -translate-y-1/2">▼</span>
-          </div>
-        </div>
+      <Header withSearch />
+      <div className="flex justify-between items-center px-5 py-2 bg-gray-800 rounded-lg">
+        <SortControl sortOrder={sortOrder} setSortOrder={setSortOrder} />
+        <ColumnToggle isSingleColumn={isSingleColumn} setIsSingleColumn={setIsSingleColumn} />
       </div>
       {loading ? (
         <div>Loading...</div>
       ) : (
-        <div className={`px-5 py-4 grid ${gridColumns === 1 ? "grid-cols-1" : "grid-cols-2"} gap-5`}>
-          {Array.isArray(sortedPokemonList) && sortedPokemonList.map((each, index) => (
+        <div className={`px-5 py-4 grid ${isSingleColumn ? "grid-cols-1" : "grid-cols-2"} gap-5`}>
+          {sortedPokemon.map((each, index) => (
             <Card key={index} name={each.name} />
           ))}
         </div>
