@@ -144,7 +144,7 @@ export const pokemonReducer = (state: PokemonState, action: PokemonAction): Poke
     case "SET_FILTER_BY_FIELD":
       return { ...state, filterByField: action.payload };
     case "SET_PAGE":
-      return { ...state, page: action.payload, offset: (action.payload - 1) * 20 };
+      return { ...state, page: action.payload};
     default:
       return state;
   }
